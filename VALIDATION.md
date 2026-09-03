@@ -45,6 +45,14 @@ With the final beta.2 archive in the sandbox, clicked the test attachment and ob
 - Other attachment formats, Projects interactions, broader draft/lifecycle preservation, keyboard-only use and assistive technology.
 - Multiple projects, disable/re-enable/uninstall and browser/timer leak checks.
 - Measured CPU/memory under sustained use. No performance claim is made.
-- Remote CI execution; the workflow is prepared but has not run on GitHub.
+- Remote CI evidence is recorded below separately from the local and interactive checks.
 
-The ordinary Rider installation now has 0.2.0-beta.2, with installation and private Issues browsing verified after restart. Only a private acceptance fixture repository was created. No public source repository, tag, release or Marketplace listing has been published. See RELEASE-CHECKLIST.md before advertising production readiness.
+The ordinary Rider installation now has 0.2.0-beta.2, with installation and private Issues browsing verified after restart. The public source repository is [ark4ez/github-web-panel](https://github.com/ark4ez/github-web-panel); its private vulnerability-reporting channel is enabled. No tag, GitHub release or Marketplace listing has been published. See RELEASE-CHECKLIST.md before advertising production readiness.
+
+## Remote CI
+
+The first GitHub Actions run is [33705051678](https://github.com/ark4ez/github-web-panel/actions/runs/33705051678), for commit `5528df0290b42f6168487d51c3e0cee475ef7994`. The complete job succeeded, including cache saving. `check buildPlugin verifyPlugin` passed on the GitHub-hosted Windows runner; Plugin Verifier 1.410 reported **Compatible** against RD-262.9437.287.
+
+Downloaded both artifacts and independently checked the package checksum, single-JAR packaging, LICENSE/PRIVACY/plugin metadata, and absence of the smoke fixture, regression classes and IDE caches. CI ZIP SHA-256: `d0340f2a33c594e4219d559f21643725ca71ea71c46bedff91d1498326478ae4`. Each CI package artifact contains its own checksum; the repository-root checksum records the earlier locally installed archive. The CI-built ZIP has not been installed into the ordinary Rider profile and does not inherit that local archive's interactive acceptance claim.
+
+The subsequent publication-record commit changes documentation only and skips CI; the run above identifies the exact source/workflow revision that was tested.
