@@ -14,4 +14,6 @@ Installed the exact packaged JAR in the stopped, isolated Rider sandbox and laun
 
 ZIP SHA-256: `6ef57d36c45b92498e8b110bf69879b978f2ae4bfc9c3b5bfe09a57166e39221`.
 
+Installed the same ZIP into ordinary Rider and restarted. The installed JAR descriptor reports 0.2.0-beta.5. Opening GitHub Web after reopening the project loaded the selected private repository's PR list directly, without reselecting the repository; the existing authenticated session was retained. The earlier sandbox pass exercised the tool window visible during startup. The public screenshot fixture's original remote and workspace file were restored after its Rider process exited.
+
 The live pass does not independently simulate every initialization race; the account-free gate regressions cover delayed/cancelled callbacks. Fresh sign-in, uploads and download handoff were not revalidated for beta.5. Remote CI status is recorded separately after publication.
