@@ -10,7 +10,7 @@ Previously named GitHub Web Panel. The plugin ID and GitHub Web tool-window name
 
 Includes an [Issue-and-panel icon](docs/ICONS.md) with light, dark and compact sidebar variants.
 
-Independent project, not affiliated with GitHub or JetBrains. This beta is undergoing release validation.
+Independent project, not affiliated with GitHub or JetBrains. The initial Marketplace beta was submitted on 2026-09-03 and is awaiting review.
 
 Includes compact navigation, a copyable address bar, and repository-aware startup. See [startup acceptance](validation/UI-beta.5.md), [address bar acceptance](validation/UI-beta.4.md) and [compact UI acceptance](validation/UI-beta.3.md) for the checked scope of each version.
 
@@ -32,7 +32,11 @@ Local **Rider 2026.2.1 (262.9437.287) or newer 262.* builds on Windows**, using 
 
 ## Install / update
 
-This source beta is not yet listed on JetBrains Marketplace and has no tagged release. Build it locally with the commands below, or open a **successful main-branch run** in [Verify plugin](https://github.com/ark4ez/github-web-panel/actions/workflows/verify.yml) and download its `plugin-package` artifact (GitHub sign-in required). Extract that artifact once to obtain the installable plugin ZIP and its `SHA256SUMS.txt`. CI artifacts expire after 14 days. A green CI run verifies automated checks, not the remaining interactive acceptance.
+[Repo Web Panel on JetBrains Marketplace](https://plugins.jetbrains.com/plugin/34049-repo-web-panel) is **under review** as of 2026-09-03 (version 0.2.0-beta.7, beta channel). It is not approved or available in the default Stable channel yet. There is no tagged GitHub release. See the [submission record](validation/MARKETPLACE-beta.7.md).
+
+**After Marketplace approval**, add `https://plugins.jetbrains.com/plugins/beta/34049` in Rider's **Settings → Plugins → gear → Manage Plugin Repositories**, then search for Repo Web Panel. This is the [plugin-specific custom repository](https://plugins.jetbrains.com/docs/marketplace/custom-release-channels.html) for the beta channel; availability has not yet been confirmed.
+
+Until approval, build it locally with the commands below, or open a **successful main-branch run** in [Verify plugin](https://github.com/ark4ez/github-web-panel/actions/workflows/verify.yml) and download its `plugin-package` artifact (GitHub sign-in required). Extract that artifact once to obtain the installable plugin ZIP and its `SHA256SUMS.txt`. CI artifacts expire after 14 days. A green CI run verifies automated checks, not the remaining interactive acceptance.
 
 1. In Rider open **Settings → Plugins → gear → Install Plugin from Disk**.
 2. Choose `github-web-panel-0.2.0-beta.7.zip`, without extracting it. It updates the earlier GitHub Web Panel versions with the same plugin ID.

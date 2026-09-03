@@ -1,6 +1,16 @@
-# Marketplace submission draft
+# Marketplace submission
 
-Prepared 2026-09-03 for ark4ez. The owner approved the public name Repo Web Panel and initial beta submission. The upload form uses the existing ark4ez vendor, MIT, the public source URL and the beta channel, with Issue Trackers selected. Submission outcome is recorded below when available.
+Submitted 2026-09-03 for ark4ez after the owner approved the public name Repo Web Panel and initial beta submission. The existing ark4ez vendor, MIT, public source URL, beta channel and Issue Trackers category were used.
+
+## Submission outcome
+
+- [Marketplace plugin 34049](https://plugins.jetbrains.com/plugin/34049-repo-web-panel), version 0.2.0-beta.7, update 1160406: **Under review**.
+- Compatibility: Rider 2026.2.1, range 262.9437.287 through 262.*. Marketplace's own verification verdict is still pending; local Plugin Verifier and GitHub CI passed.
+- Two genuine public, signed-out screenshots were uploaded and saved. Their provenance is recorded below.
+- The Getting Started, dedicated Privacy Policy and Contacts & Resources fields could not be edited because their UI controls were disabled. These dedicated fields remain empty. The submitted description includes privacy, source and support links; the repository README contains setup instructions.
+- No Stable-channel version or GitHub Release was published. Moderation approval is pending.
+
+Full artifact checksum and validation scope: [submission evidence](../validation/MARKETPLACE-beta.7.md).
 
 ## Listing fields
 
@@ -16,9 +26,9 @@ Prepared 2026-09-03 for ark4ez. The owner approved the public name Repo Web Pane
 - Support: https://github.com/ark4ez/github-web-panel/issues
 - Private security reports: https://github.com/ark4ez/github-web-panel/security/advisories/new
 - Privacy: https://github.com/ark4ez/github-web-panel/blob/main/PRIVACY.md
-- Intended channel: `beta`; choose the relevant version-control/issue-tracking tags offered by the form.
+- Channel: `beta`; category: Issue Trackers.
 
-The beta channel requires users to add its custom repository in Rider; it is not equivalent to default-channel discovery. After a numeric Marketplace plugin ID exists, prefer the plugin-specific beta repository URL documented by JetBrains.
+After approval, users can add `https://plugins.jetbrains.com/plugins/beta/34049` as a custom repository in Rider. Beta-channel installation is not equivalent to default-channel discovery. Availability has not yet been confirmed.
 
 ## Short description
 
@@ -60,7 +70,7 @@ First Marketplace beta. Includes repository-aware startup, GitHub Issues/PR/Proj
 
 ## Package and evidence
 
-Upload candidate: `github-web-panel-0.2.0-beta.7.zip`, rebuilt after the owner-approved rename and listing/privacy text updates. Its exact checksum and verification evidence are recorded in `validation/MARKETPLACE-beta.7.md`. Runtime Java code is unchanged from beta.6; live dark-theme installation, active sidebar icon, startup and existing authenticated browsing for that version are recorded in [icon acceptance](../validation/ICONS-beta.6.md). The beta.7 binary does not inherit an exact-binary live UI acceptance claim.
+Submitted package: `github-web-panel-0.2.0-beta.7.zip`, rebuilt after the owner-approved rename and listing/privacy text updates. Its exact checksum and verification evidence are recorded in [submission evidence](../validation/MARKETPLACE-beta.7.md). Runtime Java code is unchanged from beta.6; live dark-theme installation, active sidebar icon, startup and existing authenticated browsing for that version are recorded in [icon acceptance](../validation/ICONS-beta.6.md). The beta.7 binary does not inherit an exact-binary live UI acceptance claim.
 
 The previous runtime source revision `29a52eaae212fa85f9aae5ab6ea00a9601160113` passed [beta.6 CI](https://github.com/ark4ez/github-web-panel/actions/runs/33708914319); it is distinct from the renamed beta.7 artifact.
 
