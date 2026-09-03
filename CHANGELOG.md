@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0-beta.6
+
+- Replace the code-bracket icon with an original Issue-and-panel design.
+- Add light/dark plugin logos and native 16/20 px sidebar variants with New UI icon mapping.
+
 ## 0.2.0-beta.5
 
 - Wait for Rider's VCS initialization before selecting the initial repository page, including projects whose Git models take longer than 800 ms to load.

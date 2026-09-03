@@ -1,20 +1,21 @@
 <idea-plugin>
     <id>local.github.web.panel</id>
     <name>GitHub Web Panel</name>
-    <version>0.2.0-beta.5</version>
+    <version>0.2.0-beta.6</version>
     <vendor url="https://github.com/ark4ez">ark4ez</vendor>
     <description><![CDATA[
       <p>Keep GitHub's own website beside your code. Open Issues, pull requests and Projects for the repository detected from Git remotes.</p>
       <p>No personal access token is required. Sign in directly on github.com. Browser cookies are managed by Rider and may be shared with other embedded browsers.</p>
       <p>Beta: Windows and local Rider 2026.2.1. External SSO, GitHub Enterprise and remote development are not supported. Attachment downloads use your system browser and its separate session. Independent project; not affiliated with GitHub or JetBrains.</p>
     ]]></description>
-    <change-notes><![CDATA[<p>Open the correct repository after Rider finishes VCS initialization. Includes compact navigation, a selectable address bar and Copy URL.</p>]]></change-notes>
+    <change-notes><![CDATA[<p>A new Issue-and-panel icon, with dedicated light, dark and compact sidebar variants.</p>]]></change-notes>
     <idea-version since-build="262.9437.287" until-build="262.*" />
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.rider</depends>
     <depends>Git4Idea</depends>
     <depends>com.intellij.modules.jcef</depends>
     <extensions defaultExtensionNs="com.intellij">
+        <iconMapper mappingFile="GitHubPanelIconMappings.json" />
         <toolWindow id="GitHub Web" anchor="right" factoryClass="local.githubpanel.GitHubToolWindowFactory" icon="/icons/github-panel.svg" />
     </extensions>
 </idea-plugin>
