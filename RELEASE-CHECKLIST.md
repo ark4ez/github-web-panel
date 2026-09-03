@@ -29,4 +29,4 @@ Owner: ark4ez. License: MIT. Current build: 0.2.0-beta.7 (Repo Web Panel). See [
 - Include MIT license, privacy notice and release notes; obtain the account owner's approval of Marketplace legal agreements.
 - Publish only after the authenticated acceptance items needed for the advertised feature set pass. The current beta must not be described as production-certified.
 
-Marketplace upload, public repository creation, tags and releases are separate actions. No workflow here publishes automatically.
+Marketplace upload, tags and release publication are separate actions. [Release CI](docs/RELEASING.md) creates an unpublished GitHub Release draft only after a version tag passes the automated gates. Manual workflow runs validate and build without creating a release. The owner reviews acceptance and the attached artifacts before publishing the draft. No workflow uploads to Marketplace.

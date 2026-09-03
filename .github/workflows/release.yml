@@ -1,0 +1,72 @@
+name: Prepare release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Version to validate (for example v0.2.0-beta.8); manual runs never create a release
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    uses: ./.github/workflows/verify.yml
+    with:
+      release-tag: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+
+  draft:
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    needs: build
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      # No checkout or execution of repository/build scripts in this write-capable job.
+      - name: Download verified package
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: plugin-package
+          path: package
+      - name: Download verification evidence
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: plugin-verification
+          path: verification
+      - name: Download release notes
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: release-metadata
+          path: metadata
+      - name: Check assets and create unpublished draft
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          PRERELEASE: ${{ needs.build.outputs.prerelease }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $packages = @(Get-ChildItem -LiteralPath package -Filter '*.zip')
+          if ($packages.Count -ne 1) { throw 'Expected exactly one verified plugin ZIP.' }
+          $checksum = (Get-Content -LiteralPath package/SHA256SUMS.txt -Raw).Trim()
+          $actual = (Get-FileHash -LiteralPath $packages[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($checksum -cne "$actual  $($packages[0].Name)") { throw 'Package checksum mismatch.' }
+          $metadata = Get-Content -LiteralPath metadata/release.json -Raw | ConvertFrom-Json
+          if ($metadata.Tag -cne $env:RELEASE_TAG) { throw 'Artifact tag mismatch.' }
+          if ($env:PRERELEASE -notin @('true', 'false')) { throw 'Missing prerelease decision.' }
+          Compress-Archive -Path verification/* -DestinationPath plugin-verification.zip
+          $releaseArgs = @('release', 'create', $env:RELEASE_TAG, '--verify-tag', '--draft', '--title', "Repo Web Panel $env:RELEASE_TAG", '--notes-file', 'metadata/RELEASE-NOTES.md')
+          if ($env:PRERELEASE -eq 'true') { $releaseArgs += '--prerelease' }
+          $releaseArgs += @($packages[0].FullName, 'package/SHA256SUMS.txt', 'plugin-verification.zip')
+          & gh @releaseArgs
+          if ($LASTEXITCODE -ne 0) { throw 'Draft creation failed; inspect any existing release before retrying. Existing releases are never overwritten.' }

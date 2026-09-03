@@ -70,7 +70,7 @@ The canonical build pins Gradle 9.1.0 (with SHA-256), IntelliJ Platform Gradle P
 ./gradlew.bat '-PlocalRider=C:/path/to/Rider' check buildPlugin verifyPlugin
 ```
 
-The ZIP is under `build/distributions/`; binary compatibility reports are under `build/reports/pluginVerifier/`. `check` runs account-free URL, preference and toolbar-layout regressions. Archives use stable ordering/timestamps. CI contains no publication credentials or automatic release job.
+The ZIP is under `build/distributions/`; binary compatibility reports are under `build/reports/pluginVerifier/`. `check` runs account-free URL, preference and toolbar-layout regressions. Archives use stable ordering/timestamps. Tag-triggered [release CI](docs/RELEASING.md) reuses these checks and creates an unpublished GitHub Release draft with the ZIP, checksum and verification reports. Marketplace uploads and the final publication decision remain manual.
 
 For a quick Windows build with **no dependency downloads**, `./build.ps1` compiles against the installed Rider and runs the same regressions. This fallback does **not** replace Plugin Verifier.
 

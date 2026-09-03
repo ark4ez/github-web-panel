@@ -12,4 +12,6 @@ Do not add telemetry, a developer backend, PAT storage, cookie export, DOM scrap
 
 Do not commit IDE caches, sandbox state, login URLs, cookies or private screenshots. The smoke fixture may inspect only the known public test page and must never enter the production archive.
 
-Each release needs the exact ZIP, SHA-256, Plugin Verifier report and a completed acceptance record in RELEASE-CHECKLIST.md. Marketplace uploads and GitHub releases are manual. License contributions under the repository's MIT license.
+Changes to main go through a pull request with the required `verify` check passing against the latest main and all review threads resolved. Another person's approval is optional for solo maintenance. Do not use `[skip ci]` in PR commits: the required check must run.
+
+Each release needs the exact ZIP, SHA-256, Plugin Verifier report and a completed acceptance record in RELEASE-CHECKLIST.md. [Release CI](docs/RELEASING.md) prepares an unpublished GitHub Release draft from an approved version tag. The final publication decision and Marketplace uploads are manual. License contributions under the repository's MIT license.
