@@ -11,4 +11,4 @@ Sizes, suffixes, mapping registration and sidebar colors follow JetBrains' [Work
 
 ![Light and dark icon previews](images/icon-preview.png)
 
-Preview generated on 2026-09-03 with `SVGLoader` from Rider 2026.2.1, using the exact resource SVGs. The logo is shown enlarged and at 40 px; sidebar icons are shown at 20/16 px. This is a rendered artwork preview, not a screenshot of an installed plugin. Selection-state recoloring and automatic resource selection still require live UI acceptance.
+Preview generated on 2026-09-03 with `SVGLoader` from Rider 2026.2.1, using the exact resource SVGs. The logo is shown enlarged and at 40 px; sidebar icons are shown at 20/16 px. This is a rendered artwork preview, not a screenshot of an installed plugin. A subsequent ordinary Rider pass confirmed the dark logo, sidebar icon and white-on-blue active state; see [acceptance scope](../validation/ICONS-beta.6.md).
