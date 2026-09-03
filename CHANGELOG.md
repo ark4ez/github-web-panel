@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0-beta.7
+
+- Rename the public product to Repo Web Panel while preserving its plugin ID and GitHub Web tool window.
+- Prepare the initial Marketplace beta description, limitations and support links.
+- Link the established private vulnerability-reporting channel from the privacy notice.
+
 ## 0.2.0-beta.6
 
 - Replace the code-bracket icon with an original Issue-and-panel design.

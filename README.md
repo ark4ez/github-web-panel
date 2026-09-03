@@ -1,10 +1,12 @@
-# GitHub Web Panel
+# Repo Web Panel
 
 [![Verify plugin](https://github.com/ark4ez/github-web-panel/actions/workflows/verify.yml/badge.svg)](https://github.com/ark4ez/github-web-panel/actions/workflows/verify.yml)
 
 GitHub's website beside your code, with the current repository selected from Git remotes.
 
-**0.2.0-beta.6 · MIT · ark4ez**
+**0.2.0-beta.7 · MIT · ark4ez**
+
+Previously named GitHub Web Panel. The plugin ID and GitHub Web tool-window name are preserved for existing installations.
 
 Includes an [Issue-and-panel icon](docs/ICONS.md) with light, dark and compact sidebar variants.
 
@@ -33,7 +35,7 @@ Local **Rider 2026.2.1 (262.9437.287) or newer 262.* builds on Windows**, using 
 This source beta is not yet listed on JetBrains Marketplace and has no tagged release. Build it locally with the commands below, or open a **successful main-branch run** in [Verify plugin](https://github.com/ark4ez/github-web-panel/actions/workflows/verify.yml) and download its `plugin-package` artifact (GitHub sign-in required). Extract that artifact once to obtain the installable plugin ZIP and its `SHA256SUMS.txt`. CI artifacts expire after 14 days. A green CI run verifies automated checks, not the remaining interactive acceptance.
 
 1. In Rider open **Settings → Plugins → gear → Install Plugin from Disk**.
-2. Choose `github-web-panel-0.2.0-beta.6.zip`, without extracting it. It updates the 0.1.0 prototype with the same plugin ID.
+2. Choose `github-web-panel-0.2.0-beta.7.zip`, without extracting it. It updates the earlier GitHub Web Panel versions with the same plugin ID.
 3. Restart only if Rider requests it. Open **View → Tool Windows → GitHub Web**.
 4. Read the first-use notice and choose **Open GitHub**. Resize or move the tool window for a wider GitHub layout; the section selector stays beside the repository. Back, Forward and Reload are in the title bar.
 5. Choose **More (⋯) → Sign in to GitHub** for private repositories. Enter passwords/2FA directly on GitHub yourself.

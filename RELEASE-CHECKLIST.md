@@ -1,6 +1,6 @@
 # Release criteria
 
-Owner: ark4ez. License: MIT. Current build: 0.2.0-beta.2.
+Owner: ark4ez. License: MIT. Current build: 0.2.0-beta.7 (Repo Web Panel). See [Marketplace submission](docs/MARKETPLACE.md), [previous runtime CI](validation/CI-beta.6.md) and [installed beta.6 UI acceptance](validation/ICONS-beta.6.md). Remaining interactive checks below are not implied to have passed.
 
 ## Automated gates
 

@@ -1,6 +1,6 @@
 # Privacy and session behavior
 
-GitHub Web Panel is maintained by ark4ez. It embeds the actual GitHub website.
+Repo Web Panel (previously GitHub Web Panel) is maintained by ark4ez. It embeds the actual GitHub website.
 
 ## Data paths
 
@@ -25,4 +25,4 @@ The plugin runs with IDE process permissions, like other JetBrains plugins. Open
 
 ## Reports
 
-Do not include passwords, PATs, OTPs, cookies, private issue text, or raw auth URLs in public reports. A repository-specific private reporting channel must be established before Marketplace publication.
+Do not include passwords, PATs, OTPs, cookies, private issue text, or raw auth URLs in public reports. Report security issues through [GitHub private vulnerability reporting](https://github.com/ark4ez/github-web-panel/security/advisories/new).

@@ -1,14 +1,23 @@
 <idea-plugin>
     <id>local.github.web.panel</id>
-    <name>GitHub Web Panel</name>
-    <version>0.2.0-beta.6</version>
+    <name>Repo Web Panel</name>
+    <version>0.2.0-beta.7</version>
     <vendor url="https://github.com/ark4ez">ark4ez</vendor>
     <description><![CDATA[
-      <p>Keep GitHub's own website beside your code. Open Issues, pull requests and Projects for the repository detected from Git remotes.</p>
-      <p>No personal access token is required. Sign in directly on github.com. Browser cookies are managed by Rider and may be shared with other embedded browsers.</p>
-      <p>Beta: Windows and local Rider 2026.2.1. External SSO, GitHub Enterprise and remote development are not supported. Attachment downloads use your system browser and its separate session. Independent project; not affiliated with GitHub or JetBrains.</p>
+      <p>Repo Web Panel keeps GitHub's own website beside your code in a dedicated Rider tool window. View Issues and pull requests for repositories detected from your project's Git remotes, with the familiar GitHub web interface.</p>
+      <ul>
+        <li>Dock the panel beside your editor or use Rider's separate Window mode.</li>
+        <li>Jump to Issues, pull requests and Projects pages.</li>
+        <li>Use Back, Forward, Reload, find-in-page and zoom controls.</li>
+        <li>Copy the current page's exact URL from the address bar.</li>
+        <li>Light and dark icons, including compact sidebar variants.</li>
+      </ul>
+      <p>Sign in directly on github.com for repositories you are authorized to access. No personal access token is requested. GitHub receives normal website requests. Rider's embedded browser manages cookies and cache, which may be shared with other embedded Rider browsers. The plugin adds no analytics or developer-hosted backend. Read the <a href="https://github.com/ark4ez/github-web-panel/blob/main/PRIVACY.md">privacy notice</a> for details.</p>
+      <p><b>Beta scope:</b> Windows and local Rider 2026.2.1 (262.9437.287) through 262.*, with the bundled runtime and JCEF browser plugin. Verification targets 2026.2.1. Other operating systems, remote development, GitHub Enterprise and external SSO are unsupported. Session expiry, account switching and specific passkey/2FA flows are not release-certified.</p>
+      <p>Downloads inside the panel are unsupported. Recognized file-attachment links offer an explicit action to open the original link in your system browser, which has a separate login session. A small text attachment upload was tested; other formats and complete Projects workflows require further beta testing.</p>
+      <p>Free and open source under MIT. <a href="https://github.com/ark4ez/github-web-panel">Source</a> · <a href="https://github.com/ark4ez/github-web-panel/issues">Support</a>. Maintained by ark4ez. Independent project; not affiliated with or endorsed by GitHub, JetBrains or Microsoft.</p>
     ]]></description>
-    <change-notes><![CDATA[<p>A new Issue-and-panel icon, with dedicated light, dark and compact sidebar variants.</p>]]></change-notes>
+    <change-notes><![CDATA[<p>Initial Marketplace beta under the name Repo Web Panel. Includes repository-aware startup, compact navigation, page search, zoom, Copy URL and dedicated light/dark icons. Existing local installations retain the same plugin ID. Windows Rider 2026.2.1 compatibility verified; see the description for beta limitations.</p>]]></change-notes>
     <idea-version since-build="262.9437.287" until-build="262.*" />
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.modules.rider</depends>
