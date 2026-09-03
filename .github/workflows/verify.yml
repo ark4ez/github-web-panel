@@ -33,7 +33,9 @@ jobs:
           fetch-depth: 0
       - name: Test release guards
         shell: pwsh
-        run: ./tests/Test-Release.ps1
+        run: |
+          ./tests/Test-Release.ps1
+          ./tests/Test-Marketplace.ps1
       - name: Validate release source and prepare notes
         id: release
         if: inputs.release-tag != '' && inputs.release-tag != null

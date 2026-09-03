@@ -1,9 +1,10 @@
-param([Parameter(Mandatory)][string]$Archive)
+param([Parameter(Mandatory)][string]$Archive, [string]$ExpectedVersion)
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $root = Split-Path $PSScriptRoot -Parent
-$version = ((Get-Content "$root/gradle.properties" | Where-Object { $_ -cmatch '^pluginVersion=' }) -replace '^pluginVersion=', '').Trim()
+$version = $ExpectedVersion
+if ([string]::IsNullOrWhiteSpace($version)) { $version = ((Get-Content "$root/gradle.properties" | Where-Object { $_ -cmatch '^pluginVersion=' }) -replace '^pluginVersion=', '').Trim() }
 if ((Split-Path $Archive -Leaf) -cne "github-web-panel-$version.zip") { throw 'Unexpected package filename.' }
 $zip = [IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $Archive).Path)
 try {

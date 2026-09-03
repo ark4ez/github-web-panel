@@ -1,0 +1,101 @@
+name: Publish Marketplace beta
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release-run-id:
+        description: Successful Prepare release run to inspect; manual runs never upload
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: marketplace-beta
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.event_name == 'workflow_dispatch' || github.event.release.prerelease
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Validate candidate and source run
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_RUN_ID: ${{ inputs.release-run-id }}
+        run: |
+          ./scripts/Prepare-Marketplace.ps1 -OutputDirectory "$env:RUNNER_TEMP/marketplace-candidate"
+      - name: Save inspected candidate
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: marketplace-candidate
+          path: ${{ runner.temp }}/marketplace-candidate/
+          if-no-files-found: error
+          retention-days: 14
+
+  upload:
+    if: github.event_name == 'release'
+    needs: prepare
+    runs-on: windows-latest
+    timeout-minutes: 10
+    environment:
+      name: marketplace-beta
+      url: https://plugins.jetbrains.com/plugin/34049-repo-web-panel
+    permissions: {}
+    steps:
+      # No checkout, build tools, or repository scripts in the credential-bearing job.
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: marketplace-candidate
+          path: candidate
+      - name: Upload the exact ZIP to the beta channel
+        shell: pwsh
+        env:
+          MARKETPLACE_TOKEN: ${{ secrets.MARKETPLACE_TOKEN }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ([string]::IsNullOrWhiteSpace($env:MARKETPLACE_TOKEN)) { throw 'Configure MARKETPLACE_TOKEN in the marketplace-beta environment before publishing.' }
+          if ($env:RELEASE_TAG -cnotmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-beta\.(0|[1-9][0-9]*)$') { throw 'Only numbered beta tags can be uploaded.' }
+          $version = $env:RELEASE_TAG.Substring(1)
+          $filename = "github-web-panel-$version.zip"
+          $package = Get-Item -LiteralPath "candidate/$filename"
+          if ($package.Length -ge 400000000) { throw 'Package exceeds the upload limit.' }
+          $actual = (Get-FileHash -LiteralPath $package.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ((Get-Content candidate/SHA256SUMS.txt -Raw).Trim() -cne "$actual  $filename") { throw 'Candidate checksum mismatch.' }
+          $plan = Get-Content candidate/marketplace.json -Raw | ConvertFrom-Json
+          if ($plan.Tag -cne $env:RELEASE_TAG -or $plan.Sha256 -cne $actual -or $plan.PluginId -ne 34049 -or $plan.Channel -cne 'beta') { throw 'Candidate metadata mismatch.' }
+          $handler = [Net.Http.HttpClientHandler]::new()
+          $handler.AllowAutoRedirect = $false
+          $client = [Net.Http.HttpClient]::new($handler)
+          $client.Timeout = [TimeSpan]::FromMinutes(3)
+          $form = [Net.Http.MultipartFormDataContent]::new()
+          try {
+            $client.DefaultRequestHeaders.Authorization = [Net.Http.Headers.AuthenticationHeaderValue]::new('Bearer', $env:MARKETPLACE_TOKEN)
+            $form.Add([Net.Http.StringContent]::new('34049'), 'pluginId')
+            $form.Add([Net.Http.StringContent]::new('beta'), 'channel')
+            $form.Add([Net.Http.StringContent]::new('false'), 'isHidden')
+            $form.Add([Net.Http.StringContent]::new('false'), 'containsAds')
+            $file = [Net.Http.StreamContent]::new([IO.File]::OpenRead($package.FullName))
+            $file.Headers.ContentType = [Net.Http.Headers.MediaTypeHeaderValue]::new('application/zip')
+            $form.Add($file, 'file', $filename)
+            try { $response = $client.PostAsync('https://plugins.jetbrains.com/api/updates/upload', $form).GetAwaiter().GetResult() }
+            catch { throw 'Upload outcome is uncertain. Inspect Marketplace before retrying; automatic retries are disabled.' }
+            try {
+              if (-not $response.IsSuccessStatusCode) { throw "Marketplace returned HTTP $([int]$response.StatusCode). Inspect the plugin page before retrying." }
+              "Submitted $version to Repo Web Panel (34049), beta channel. SHA-256: $actual. Upload acceptance is not Marketplace approval." >> $env:GITHUB_STEP_SUMMARY
+            } finally { $response.Dispose() }
+          } finally { $form.Dispose(); $client.Dispose(); $handler.Dispose() }
