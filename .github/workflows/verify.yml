@@ -4,19 +4,50 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      release-tag:
+        description: Optional v-prefixed version to validate and prepare for release
+        required: false
+        type: string
+        default: ''
+    outputs:
+      prerelease:
+        description: Whether the validated version is a prerelease
+        value: ${{ jobs.verify.outputs.prerelease }}
 permissions:
   contents: read
 concurrency:
-  group: verify-${{ github.ref }}
-  cancel-in-progress: true
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   verify:
     runs-on: windows-latest
     timeout-minutes: 40
+    outputs:
+      prerelease: ${{ steps.release.outputs.prerelease }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
+      - name: Test release guards
+        shell: pwsh
+        run: ./tests/Test-Release.ps1
+      - name: Validate release source and prepare notes
+        id: release
+        if: inputs.release-tag != '' && inputs.release-tag != null
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.release-tag }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          $tagPush = $env:EVENT_NAME -eq 'push' -and $env:REF_TYPE -eq 'tag'
+          if ($tagPush -and $env:REF_NAME -cne $env:RELEASE_TAG) { throw 'Event tag mismatch.' }
+          $metadata = ./scripts/Prepare-Release.ps1 -Tag $env:RELEASE_TAG -OutputDirectory "$env:RUNNER_TEMP/release-metadata" -RequireMain:$tagPush
+          "prerelease=$($metadata.Prerelease.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
       - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
         with:
           distribution: temurin
@@ -32,6 +63,7 @@ jobs:
           $packages = @(Get-ChildItem -LiteralPath build/distributions -Filter '*.zip')
           if ($packages.Count -eq 0) { throw 'No plugin package produced.' }
           $packages | ForEach-Object {
+            ./scripts/Test-PluginPackage.ps1 -Archive $_.FullName
             $digest = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
             "$digest  $($_.Name)"
           } | Set-Content -LiteralPath build/distributions/SHA256SUMS.txt -Encoding utf8NoBOM
@@ -40,6 +72,14 @@ jobs:
         with:
           name: plugin-package
           path: build/distributions/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload release notes
+        if: inputs.release-tag != '' && inputs.release-tag != null
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-metadata
+          path: ${{ runner.temp }}/release-metadata/
           if-no-files-found: error
           retention-days: 14
       - name: Upload verification reports
