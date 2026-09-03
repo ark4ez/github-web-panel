@@ -30,12 +30,12 @@ Only push the intended tag, not all local tags. A tag pushed with Actions' own `
 
 The draft attaches the installable plugin ZIP, `SHA256SUMS.txt`, and `plugin-verification.zip`. Notes are extracted from the matching changelog section. A `-beta.N` version is marked prerelease; stable versions remain drafts too. The final **Publish release** action is manual after acceptance review. Existing releases and assets are never overwritten by a rerun. If a failed attempt left a partial draft, inspect it before manually deleting that draft and rerunning; preserve the tag.
 
-No extra secret is needed for GitHub draft creation: the job uses its scoped `GITHUB_TOKEN`. No Marketplace token is stored or consumed. Current initial Marketplace submission and review status are recorded [separately](../validation/MARKETPLACE-beta.7.md). A later Marketplace CI stage will need owner-configured credentials and an explicit beta/default channel decision.
+No extra secret is needed for GitHub draft creation: the job uses its scoped `GITHUB_TOKEN`. Publishing a numbered beta GitHub Release starts the separate [Marketplace beta workflow](MARKETPLACE-CI.md), which needs `MARKETPLACE_TOKEN` in the `marketplace-beta` environment. The draft/build jobs never receive that token. Stable Marketplace publishing is not configured. Current initial Marketplace submission and review status are recorded [separately](../validation/MARKETPLACE-beta.7.md).
 
 ## Validation-only run
 
 Once this workflow exists on main, open **Actions → Prepare release → Run workflow** and enter the expected version tag. A manual run validates metadata, builds the ZIP and uploads artifacts, but never creates a tag or release, and does not assert tag existence or main ancestry. It can be used on a development branch to check a future release candidate. Those extra source guards run on real tag pushes.
 
-CI artifacts expire after 14 days. Download important acceptance evidence before expiry. Artifacts attached to a published GitHub Release provide the intended longer-lived download path.
+CI artifacts expire after 14 days. Publish a selected beta while its verified source artifacts remain available: the Marketplace workflow compares the GitHub Release assets against those original CI artifacts and refuses expired/mismatched evidence. Download important acceptance evidence before expiry. Assets attached to a published GitHub Release provide the intended longer-lived download path.
 
 References: [GitHub release CLI](https://cli.github.com/manual/gh_release_create), [workflow permissions](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#permissions), [triggering workflows](https://docs.github.com/en/actions/how-tos/writing-workflows/choosing-when-your-workflow-runs/triggering-a-workflow), [JetBrains publishing](https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html).

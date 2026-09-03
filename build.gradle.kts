@@ -75,4 +75,5 @@ intellijPlatform {
         )
     }
 }
-// Publishing is intentionally manual: no Marketplace token or automated upload task is configured.
+// Marketplace CI uploads the inspected release ZIP through the official upload API.
+// Gradle builds never receive a Marketplace token or rebuild a package during publication.

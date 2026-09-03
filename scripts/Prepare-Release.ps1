@@ -17,6 +17,7 @@ if ($RequireMain) {
 }
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $metadata | ConvertTo-Json | Set-Content "$OutputDirectory/release.json" -Encoding utf8NoBOM
+$marketplaceNote = if ($metadata.Prerelease) { 'Publishing this beta GitHub Release starts the Marketplace beta workflow for the same verified ZIP. The marketplace-beta environment must contain MARKETPLACE_TOKEN. Upload acceptance does not imply Marketplace approval.' } else { 'Stable Marketplace publishing is not configured; publishing this GitHub Release does not upload to Marketplace.' }
 $notes = @"
 $($metadata.Notes)
 
@@ -28,7 +29,7 @@ SHA256SUMS.txt identifies this run's package. plugin-verification.zip contains t
 
 Before publishing this draft, review [release acceptance](https://github.com/ark4ez/github-web-panel/blob/$Tag/RELEASE-CHECKLIST.md), the supported Rider/Windows scope and beta limitations in the [README](https://github.com/ark4ez/github-web-panel/blob/$Tag/README.md).
 
-This GitHub Release does not upload to JetBrains Marketplace or change Marketplace review status.
+$marketplaceNote
 "@
 $notes | Set-Content "$OutputDirectory/RELEASE-NOTES.md" -Encoding utf8NoBOM
 $metadata
