@@ -13,5 +13,6 @@ public final class GitHubToolWindowFactory implements ToolWindowFactory, DumbAwa
         Content content = ContentFactory.getInstance().createContent(panel, "", false);
         content.setDisposer(panel);
         toolWindow.getContentManager().addContent(content);
+        toolWindow.setTitleActions(panel.titleActions());
     }
 }

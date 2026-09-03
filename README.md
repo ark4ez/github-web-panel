@@ -4,9 +4,15 @@
 
 GitHub's website beside your code, with the current repository selected from Git remotes.
 
-**0.2.0-beta.2 · MIT · ark4ez**
+**0.2.0-beta.5 · MIT · ark4ez**
 
 Independent project, not affiliated with GitHub or JetBrains. This beta is undergoing release validation.
+
+Includes compact navigation, a copyable address bar, and repository-aware startup. See [startup acceptance](validation/UI-beta.5.md), [address bar acceptance](validation/UI-beta.4.md) and [compact UI acceptance](validation/UI-beta.3.md) for the checked scope of each version.
+
+![GitHub Issues in a dedicated Rider window](docs/images/issues-window.png)
+
+The panel can stay docked beside your editor or use Rider's **View Mode → Window**. The screenshot shows a public repository while signed out. [Copying an individual Issue URL](docs/images/copy-issue-url.png) is also supported.
 
 ## Scope
 
@@ -14,9 +20,10 @@ Local **Rider 2026.2.1 (262.9437.287) or newer 262.* builds on Windows**, using 
 
 - Actual GitHub Issues, PR and Projects pages.
 - Repository discovery from HTTPS/SSH github.com Git remotes; no git subprocess or fetch.
-- First-use connection choice and responsive, keyboard-focusable toolbar.
+- First-use connection choice, native Rider title-bar actions and a compact repository/section row.
 - Back/forward, reload, page search, zoom/reset and external-browser action.
 - Remember repository/section/zoom; preserve the current page when Git remotes change.
+- Wait for Rider's initial Git models before choosing the landing page; explicit navigation takes priority.
 - HTTP 403/404/network guidance; external HTTPS links need an explicit action.
 
 ## Install / update
@@ -24,14 +31,16 @@ Local **Rider 2026.2.1 (262.9437.287) or newer 262.* builds on Windows**, using 
 This source beta is not yet listed on JetBrains Marketplace and has no tagged release. Build it locally with the commands below, or open a **successful main-branch run** in [Verify plugin](https://github.com/ark4ez/github-web-panel/actions/workflows/verify.yml) and download its `plugin-package` artifact (GitHub sign-in required). Extract that artifact once to obtain the installable plugin ZIP and its `SHA256SUMS.txt`. CI artifacts expire after 14 days. A green CI run verifies automated checks, not the remaining interactive acceptance.
 
 1. In Rider open **Settings → Plugins → gear → Install Plugin from Disk**.
-2. Choose `github-web-panel-0.2.0-beta.2.zip`, without extracting it. It updates the 0.1.0 prototype with the same plugin ID.
+2. Choose `github-web-panel-0.2.0-beta.5.zip`, without extracting it. It updates the 0.1.0 prototype with the same plugin ID.
 3. Restart only if Rider requests it. Open **View → Tool Windows → GitHub Web**.
-4. Read the first-use notice and choose **Open GitHub**. Resize the right panel for a wider GitHub layout; controls wrap at narrow widths.
-5. Choose **Sign in** for private repositories. Enter passwords/2FA directly on GitHub yourself.
+4. Read the first-use notice and choose **Open GitHub**. Resize or move the tool window for a wider GitHub layout; the section selector stays beside the repository. Back, Forward and Reload are in the title bar.
+5. Choose **More (⋯) → Sign in to GitHub** for private repositories. Enter passwords/2FA directly on GitHub yourself.
 
 A 404 can mean the page is absent or the account lacks access. After signing in, choose Issues or PR again. Do not assume a 404 always means logged out.
 
-**Find** searches within the page; Enter finds the next match and Escape closes search when the search field is focused. History shortcuts are Alt+Left/Right when focus is in Swing controls; native web focus behavior is runtime-dependent.
+**More → Find on page** searches within the page; Enter finds the next match and Escape closes search when the search field is focused. History shortcuts are Alt+Left/Right when focus is in Swing controls; native web focus behavior is runtime-dependent.
+
+The read-only address bar follows the current page. Select its text and copy, or click **Copy URL** on the right to paste the exact link into another app. Copying is explicit; full URLs are not saved in plugin preferences.
 
 ## Sessions and limits
 
@@ -73,7 +82,7 @@ Do not attach tokens, cookies, raw authentication URLs, private issue text or un
 
 GitHub本来の画面を、Rider内の専用パネルとして使う無料・MITのプラグインです。Git remoteからリポジトリを検出し、Issues／PR／Projectsを開きます。
 
-初回の **Open GitHub** で接続し、非公開リポジトリは **Sign in** から本人がログインしてください。細い幅でも操作ボタンは折り返します。**Find** はページ内検索、**100%** は倍率リセットです。
+初回の **Open GitHub** で接続し、非公開リポジトリは **Sign in** から本人がログインしてください。上部にはリポジトリ／セクションの選択と、現在のURLを表示するアドレスバーがあります。右端の **Copy URL** で他のアプリに貼り付けられます。戻る・進む・再読み込みはタイトルバー、検索・倍率・ログインは **More（⋯）** にあります。
 
 現段階はベータです。通常ブラウザとはログインが別で、Rider内のほかの埋め込みブラウザとはCookieを共有する可能性があります。非公開リポジトリの表示、Rider再起動後のログイン保持、Issue作成、コメント投稿、小さなテキストファイルの添付を確認済みです。添付のダウンロードは通常ブラウザへ渡す方式で、別途ログインが必要な場合があります。外部SSOは未対応で、セッション期限切れ・アカウント切替などの検証が残っています。
 

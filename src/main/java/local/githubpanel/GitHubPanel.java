@@ -2,12 +2,17 @@ package local.githubpanel;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefBrowser;
 import com.intellij.ui.jcef.JBCefClient;
@@ -22,11 +27,13 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 /** GitHub's website, with no DOM bridge, API credential, or cookie export. */
 public final class GitHubPanel extends JPanel implements Disposable {
@@ -37,23 +44,23 @@ public final class GitHubPanel extends JPanel implements Disposable {
     private final JLabel status = new JLabel("GitHub Web");
     private final JTextArea notice = textArea("");
     private final JPanel noticePanel = new JPanel(new BorderLayout());
-    private final JPanel controls = new ResponsiveToolbar();
-    private final JButton back = button("Back", "Previous page");
-    private final JButton forward = button("Next", "Next page");
+    private final JComboBox<String> sections = new JComboBox<>(new String[]{"Issues", "PR", "Projects"});
     private final JButton externalLink = button("Open link in browser", "Open the blocked HTTPS link after confirmation");
     private final JPanel center = new JPanel(new CardLayout());
     private final JPanel findBar = new JPanel(new BorderLayout(4, 0));
     private final JTextField findText = new JTextField();
-    private final List<AbstractButton> browserButtons = new ArrayList<>();
-    private final List<AbstractButton> sectionButtons = new ArrayList<>();
+    private final JTextField address = new JTextField();
+    private final JButton copyAddress = new JButton(AllIcons.Actions.Copy);
+    private boolean canGoBack;
+    private boolean canGoForward;
+    private boolean updatingSection;
     private volatile boolean disposed;
-    private volatile String currentUrl = "https://github.com/issues";
+    private volatile String currentUrl = "";
     private String blockedUrl;
     private String section;
     private boolean updatingRepositories;
     private boolean started;
-    private boolean navigated;
-    private boolean autoOpenWhenReady;
+    private final InitialNavigation initialNavigation = new InitialNavigation();
     private boolean initialLoadFailed;
     private double zoom;
     private JBCefBrowser browser;
@@ -75,53 +82,30 @@ public final class GitHubPanel extends JPanel implements Disposable {
         repositoryRow.setBorder(BorderFactory.createEmptyBorder(4, 4, 0, 4));
         repositories.getAccessibleContext().setAccessibleName("GitHub repository");
         repositories.setPrototypeDisplayValue("owner/repository");
+        repositories.setMinimumSize(new Dimension(0, repositories.getPreferredSize().height));
         repositoryRow.add(repositories, BorderLayout.CENTER);
-        JButton rescan = button("Rescan", "Refresh repositories from Git remotes");
-        rescan.addActionListener(e -> refreshRepositories());
-        repositoryRow.add(rescan, BorderLayout.EAST);
-        top.add(repositoryRow);
-
-        back.setEnabled(false);
-        forward.setEnabled(false);
-        controls.add(back);
-        controls.add(forward);
-        addControl("Reload", "Reload current page", () -> { clearNotice(); browser.getCefBrowser().reload(); });
-        ButtonGroup sections = new ButtonGroup();
-        for (String[] tab : new String[][]{{"Issues", "issues"}, {"PR", "pulls"}, {"Projects", "projects"}}) {
-            JToggleButton tabButton = new JToggleButton(tab[0]);
-            tabButton.setMargin(new Insets(3, 7, 3, 7));
-            tabButton.setSelected(tab[1].equals(section));
-            tabButton.setToolTipText("Open " + tab[0] + " for the selected repository");
-            tabButton.addActionListener(e -> {
-                section = tab[1];
-                preferences.setValue(PREFIX + "section", section);
-                openSection();
-            });
-            sections.add(tabButton);
-            sectionButtons.add(tabButton);
-            browserButtons.add(tabButton);
-            controls.add(tabButton);
-        }
-        addControl("Sign in", "Sign in on github.com; your usual browser has a separate session", () -> navigate(GitHubUrls.signIn(repositoryForTest(), section)));
-        addControl("Browser", "Open the current GitHub page in your default browser", () -> {
-            if (GitHubUrls.isGitHubPage(currentUrl)) BrowserUtil.browse(currentUrl);
+        sections.getAccessibleContext().setAccessibleName("GitHub section");
+        sections.setToolTipText("Open Issues, pull requests or Projects");
+        selectSection();
+        sections.addActionListener(e -> {
+            if (updatingSection || !started) return;
+            String selected = switch (sections.getSelectedIndex()) {
+                case 1 -> "pulls";
+                case 2 -> "projects";
+                default -> "issues";
+            };
+            if ("projects".equals(selected) && repositoryForTest() == null) {
+                selectSection();
+                showNotice("Select a GitHub repository to open Projects.", null);
+                return;
+            }
+            section = selected;
+            preferences.setValue(PREFIX + "section", section);
+            openSection();
         });
-        addControl("Find", "Find text on the current page", this::showFind);
-        addControl("−", "Zoom out", () -> setZoom(zoom - 0.1));
-        addControl("100%", "Reset page zoom", () -> setZoom(1));
-        addControl("+", "Zoom in", () -> setZoom(zoom + 0.1));
-        JButton help = button("Help", "Session, supported sign-in methods and keyboard controls");
-        help.addActionListener(e -> Messages.showInfoMessage(project,
-            "Use your GitHub website session; no personal access token is needed.\n\n"
-            + "This session is separate from Chrome/Edge, but may be shared with other embedded browsers in Rider. "
-            + "Sign out on GitHub before using another account. Uninstalling this plugin does not clear browser cookies.\n\n"
-            + "Only github.com is supported. External SSO and GitHub Enterprise are not supported. "
-            + "A 404 may indicate a missing page or insufficient access; try Sign in or Browser.\n\n"
-            + "Tab moves through controls. Find searches within the page. Alt+Left/Right navigates history. "
-            + "The external browser has a separate session and cannot transfer its login back here.", "GitHub Web Help"));
-        controls.add(help);
-        top.add(controls);
-        controls.setVisible(false);
+        repositoryRow.add(sections, BorderLayout.EAST);
+        top.add(repositoryRow);
+        top.add(addressBar());
         configureFind();
         top.add(findBar);
         noticePanel.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
@@ -167,17 +151,98 @@ public final class GitHubPanel extends JPanel implements Disposable {
         installShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.ALT_DOWN_MASK), "forward", () -> { if (browser != null) browser.getCefBrowser().goForward(); });
     }
 
+    List<AnAction> titleActions() {
+        BooleanSupplier ready = () -> browser != null && started && !disposed;
+        DefaultActionGroup more = new DefaultActionGroup("More", true);
+        more.getTemplatePresentation().setIcon(AllIcons.Actions.MoreHorizontal);
+        more.add(action("Find on page", AllIcons.Actions.Find, ready, this::showFind));
+        more.add(action("Open in browser", null, ready, () -> {
+            if (GitHubUrls.isGitHubPage(currentUrl)) BrowserUtil.browse(currentUrl);
+        }));
+        more.add(action("Sign in to GitHub", null, ready, () -> navigate(GitHubUrls.signIn(repositoryForTest(), section))));
+        more.addSeparator();
+        DefaultActionGroup zoomMenu = new DefaultActionGroup("Page zoom", true);
+        zoomMenu.add(action("Zoom in", null, ready, () -> setZoom(zoom + .1)));
+        zoomMenu.add(action("Zoom out", null, ready, () -> setZoom(zoom - .1)));
+        zoomMenu.add(action("Reset to 100%", null, ready, () -> setZoom(1)));
+        more.add(zoomMenu);
+        more.addSeparator();
+        more.add(action("Rescan repositories", null, () -> !disposed, this::refreshRepositories));
+        more.add(action("Help and privacy", null, () -> !disposed, this::showHelp));
+        return List.of(
+            action("Back", AllIcons.Actions.Back, () -> ready.getAsBoolean() && canGoBack, () -> browser.getCefBrowser().goBack()),
+            action("Forward", AllIcons.Actions.Forward, () -> ready.getAsBoolean() && canGoForward, () -> browser.getCefBrowser().goForward()),
+            action("Reload", AllIcons.Actions.Refresh, ready, () -> { clearNotice(); browser.getCefBrowser().reload(); }),
+            more
+        );
+    }
+
+    private AnAction action(String title, Icon icon, BooleanSupplier enabled, Runnable command) {
+        return new DumbAwareAction(title, title, icon) {
+            @Override public ActionUpdateThread getActionUpdateThread() { return ActionUpdateThread.EDT; }
+            @Override public void update(AnActionEvent event) { event.getPresentation().setEnabled(enabled.getAsBoolean()); }
+            @Override public void actionPerformed(AnActionEvent event) {
+                if (!disposed && enabled.getAsBoolean()) command.run();
+            }
+        };
+    }
+
+    private void selectSection() {
+        updatingSection = true;
+        try { sections.setSelectedIndex("pulls".equals(section) ? 1 : "projects".equals(section) ? 2 : 0); }
+        finally { updatingSection = false; }
+    }
+
+    private JPanel addressBar() {
+        JPanel row = new JPanel(new BorderLayout(4, 0));
+        row.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+        address.setEditable(false);
+        address.getAccessibleContext().setAccessibleName("Current page URL");
+        address.setToolTipText("Current page URL — select and copy, or use Copy URL");
+        address.setMinimumSize(new Dimension(0, address.getPreferredSize().height));
+        address.addFocusListener(new FocusAdapter() {
+            @Override public void focusGained(FocusEvent event) { address.selectAll(); }
+        });
+        copyAddress.setToolTipText("Copy URL");
+        copyAddress.getAccessibleContext().setAccessibleName("Copy URL");
+        copyAddress.setPreferredSize(new Dimension(28, address.getPreferredSize().height));
+        copyAddress.setEnabled(false);
+        copyAddress.addActionListener(event -> {
+            String url = address.getText();
+            if (!disposed && GitHubUrls.isGitHubPage(url)) {
+                CopyPasteManager.getInstance().setContents(new StringSelection(url));
+                status.setText("URL copied");
+            }
+        });
+        row.add(address, BorderLayout.CENTER);
+        row.add(copyAddress, BorderLayout.EAST);
+        return row;
+    }
+
+    private void showHelp() {
+        Messages.showInfoMessage(project,
+            "Sign in directly on GitHub; no personal access token is needed.\n\n"
+            + "The session is separate from Chrome/Edge, but may be shared with other embedded browsers in Rider. "
+            + "Sign out on GitHub before using another account. Uninstalling does not clear cookies.\n\n"
+            + "This Windows beta supports github.com. External SSO and GitHub Enterprise are unsupported. "
+            + "Downloads use your usual browser and its separate login. Passkeys and account switching still need testing.\n\n"
+            + "A 404 can mean a missing page or insufficient access. Use More > Sign in, then choose Issues or PR.\n\n"
+            + "Use the title bar for Back, Forward and Reload. More contains search, zoom, sign-in and repository rescan. "
+            + "The address bar shows the current page URL; use Copy URL to paste it elsewhere. "
+            + "Alt+Left/Right navigates history from panel controls. Find: Enter for next match; Escape to close.",
+            "GitHub Web — Help and Privacy");
+    }
+
     private JPanel welcome() {
         JPanel welcome = new JPanel(new BorderLayout(0, 12));
         welcome.setBorder(BorderFactory.createEmptyBorder(20, 16, 20, 16));
-        JTextArea heading = textArea("Your repository. GitHub's own interface.");
+        JTextArea heading = textArea("GitHub, beside your code.");
         heading.setFont(heading.getFont().deriveFont(Font.BOLD));
         welcome.add(heading, BorderLayout.NORTH);
-        JTextArea explanation = textArea("Keep Issues, pull requests and Projects beside your code. The repository is selected from your Git remotes.\n\n"
-            + "Opening the panel connects directly to GitHub. Sign in on GitHub when you need private repositories. No personal access token is required.\n\n"
-            + "Your session may be shared with other embedded browsers in Rider. It is separate from your usual browser.\n\n"
-            + "This beta supports github.com. External SSO and GitHub Enterprise are not supported. Download attachments in your usual browser; passkeys and account switching still need testing.\n\n"
-            + "If a page shows 404, it may be missing or require access. Use Sign in, then select Issues or PR again.");
+        JTextArea explanation = textArea("Issues, pull requests and Projects — using GitHub's own website and your project's Git remote.\n\n"
+            + "Open GitHub to connect. Sign in directly on GitHub for private repositories. No personal access token is needed.\n\n"
+            + "Your session is separate from your usual browser and may be shared with other embedded Rider browsers.\n\n"
+            + "Windows beta · github.com only. External SSO is unsupported; downloads open in your usual browser. More > Help and privacy has the details.");
         JScrollPane scroll = new JScrollPane(explanation);
         scroll.setBorder(BorderFactory.createEmptyBorder());
         welcome.add(scroll, BorderLayout.CENTER);
@@ -211,25 +276,18 @@ public final class GitHubPanel extends JPanel implements Disposable {
             center.add(browser.getComponent(), "browser");
             ((CardLayout) center.getLayout()).show(center, "browser");
             started = true;
-            controls.setVisible(true);
             browser.setZoomLevel(zoom);
-            back.addActionListener(e -> browser.getCefBrowser().goBack());
-            forward.addActionListener(e -> browser.getCefBrowser().goForward());
             setBrowserControls(true);
-            autoOpenWhenReady = true;
-            // Give the cached Git model time to initialize before choosing a landing page.
-            Timer initial = new Timer(800, e -> {
-                if (!disposed && !navigated) { refreshRepositories(); if (!navigated) openSection(); }
-            });
-            initial.setRepeats(false);
-            Disposer.register(this, () -> initial.stop());
-            initial.start();
-            if (repositories.getItemCount() > 0) openSection();
+            status.setText("Waiting for project repositories…");
+            // The VCS barrier includes initial repository mappings. A fixed delay can
+            // mistake an unfinished Git model for a project without GitHub remotes.
+            initialNavigation.schedule(
+                ready -> ProjectLevelVcsManager.getInstance(project).runAfterInitialization(() -> ui(ready)),
+                () -> { refreshRepositories(); openSection(); });
         } catch (RuntimeException | LinkageError error) {
             if (browser != null) { Disposer.dispose(browser); browser = null; }
             if (client != null) { Disposer.dispose(client); client = null; }
             started = false;
-            controls.setVisible(false);
             setBrowserControls(false);
             ((CardLayout) center.getLayout()).show(center, "welcome");
             showNotice("The embedded browser could not start. Check Rider's runtime and JCEF plugin, then retry. (" + error.getClass().getSimpleName() + ")", null);
@@ -240,15 +298,16 @@ public final class GitHubPanel extends JPanel implements Disposable {
         findBar.setBorder(BorderFactory.createEmptyBorder(2, 6, 4, 6));
         findText.getAccessibleContext().setAccessibleName("Find text on page");
         findText.setToolTipText("Enter to find the next occurrence");
+        findText.setMinimumSize(new Dimension(0, findText.getPreferredSize().height));
         findBar.add(findText, BorderLayout.CENTER);
-        JPanel actions = new JPanel(new WrapLayout());
-        JButton next = button("Next", "Next match");
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.TRAILING, 2, 0));
+        JButton next = button("↓", "Next match");
         next.addActionListener(e -> find(true));
-        JButton close = button("Close", "Close page search");
+        JButton close = button("×", "Close page search");
         close.addActionListener(e -> closeFind());
         actions.add(next);
         actions.add(close);
-        findBar.add(actions, BorderLayout.SOUTH);
+        findBar.add(actions, BorderLayout.EAST);
         findBar.setVisible(false);
         findText.addActionListener(e -> find(true));
         findText.getDocument().addDocumentListener(new DocumentListener() {
@@ -279,12 +338,6 @@ public final class GitHubPanel extends JPanel implements Disposable {
         preferences.setValue(PREFIX + "zoom", Double.toString(zoom));
         status.setText("github.com · " + Math.round(zoom * 100) + "%");
     }
-    private void addControl(String title, String tooltip, Runnable action) {
-        JButton button = button(title, tooltip);
-        button.addActionListener(e -> { if (browser != null && !disposed) action.run(); });
-        browserButtons.add(button);
-        controls.add(button);
-    }
     private static JButton button(String text, String tooltip) {
         JButton button = new JButton(text);
         button.setToolTipText(tooltip);
@@ -302,11 +355,8 @@ public final class GitHubPanel extends JPanel implements Disposable {
         return area;
     }
     private void setBrowserControls(boolean enabled) {
-        for (AbstractButton button : browserButtons) button.setEnabled(enabled);
-        for (AbstractButton button : sectionButtons) {
-            if ("Projects".equals(button.getText())) button.setEnabled(enabled && repositories.getItemCount() > 0);
-        }
-        if (!enabled) { back.setEnabled(false); forward.setEnabled(false); }
+        sections.setEnabled(enabled);
+        if (!enabled) { canGoBack = false; canGoForward = false; }
     }
 
     private void refreshRepositories() {
@@ -332,8 +382,7 @@ public final class GitHubPanel extends JPanel implements Disposable {
         repositories.setEnabled(!found.isEmpty());
         repositories.setToolTipText(found.isEmpty() ? "No github.com remote found. Use your personal Issues and PR pages." : "GitHub repository from this project's Git remotes");
         setBrowserControls(started);
-        // Never replace an active page or a comment draft when Git remotes change.
-        if (autoOpenWhenReady && !navigated && !found.isEmpty()) openSection();
+        // Only update the selector: never replace an active page or a comment draft.
     }
 
     private void openSection() {
@@ -344,8 +393,7 @@ public final class GitHubPanel extends JPanel implements Disposable {
 
     void navigate(String url) {
         if (disposed || browser == null || !GitHubUrls.isGitHubPage(url)) return;
-        navigated = true;
-        autoOpenWhenReady = false;
+        initialNavigation.cancel();
         clearNotice();
         browser.loadURL(url);
     }
@@ -407,22 +455,24 @@ public final class GitHubPanel extends JPanel implements Disposable {
             @Override public void onAddressChange(CefBrowser b, CefFrame frame, String url) {
                 if (frame.isMain() && GitHubUrls.isGitHubPage(url)) {
                     currentUrl = url; // In-memory only. Never log or persist redirects or query strings.
-                    ui(() -> GitHubUrls.sectionForPage(url, repositoryForTest()).ifPresent(active -> {
-                        section = active;
-                        preferences.setValue(PREFIX + "section", active);
-                        for (AbstractButton button : sectionButtons) {
-                            String target = "PR".equals(button.getText()) ? "pulls" : button.getText().toLowerCase(java.util.Locale.ROOT);
-                            button.setSelected(target.equals(active));
-                        }
-                    }));
+                    ui(() -> {
+                        address.setText(url);
+                        address.setCaretPosition(0);
+                        copyAddress.setEnabled(true);
+                        GitHubUrls.sectionForPage(url, repositoryForTest()).ifPresent(active -> {
+                            section = active;
+                            preferences.setValue(PREFIX + "section", active);
+                            selectSection();
+                        });
+                    });
                 }
             }
         });
         cef.addLoadHandler(new CefLoadHandlerAdapter() {
             @Override public void onLoadingStateChange(CefBrowser b, boolean loading, boolean canBack, boolean canForward) {
                 ui(() -> {
-                    back.setEnabled(canBack);
-                    forward.setEnabled(canForward);
+                    canGoBack = canBack;
+                    canGoForward = canForward;
                     status.setText(loading ? "Loading github.com…" : initialLoadFailed ? "Page could not load" : "github.com");
                 });
             }
@@ -455,6 +505,7 @@ public final class GitHubPanel extends JPanel implements Disposable {
     void startForTest() { startBrowsing(); }
     @Override public void dispose() {
         disposed = true;
+        initialNavigation.cancel();
         blockedUrl = null;
         currentUrl = "";
         if (refreshTimer != null) refreshTimer.stop();

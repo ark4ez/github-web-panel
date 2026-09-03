@@ -11,6 +11,7 @@ public final class RegressionSuite {
     private static int checks;
     public static void main(String[] args) throws Exception {
         GitHubUrlsTest.main(args);
+        initialNavigation();
         for (String value : new String[]{null, "", "NaN", "Infinity", "-Infinity", "garbage"}) check(PanelPreferences.zoom(value) == 1.0, "invalid zoom");
         check(PanelPreferences.zoom("0.1") == .5, "lower bound");
         check(PanelPreferences.zoom("9") == 2, "upper bound");
@@ -34,6 +35,29 @@ public final class RegressionSuite {
         SwingUtilities.invokeAndWait(RegressionSuite::layout);
         nestedResize();
         System.out.println("PASS: " + checks + " product regressions (plus URL suite)");
+    }
+    private static void initialNavigation() {
+        Runnable[] ready = new Runnable[1];
+        String[] repository = new String[1], opened = new String[1];
+        int[] count = {0};
+        InitialNavigation initial = new InitialNavigation();
+        initial.schedule(callback -> ready[0] = callback, () -> { opened[0] = repository[0]; count[0]++; });
+        check(count[0] == 0, "do not open personal page before Git initialization");
+        repository[0] = "owner/repository";
+        ready[0].run();
+        check("owner/repository".equals(opened[0]), "use repository discovered during delayed initialization");
+        ready[0].run();
+        check(count[0] == 1, "initial navigation happens only once");
+        InitialNavigation noGit = new InitialNavigation();
+        noGit.schedule(Runnable::run, () -> count[0]++);
+        check(count[0] == 2, "completed no-Git initialization still opens fallback");
+        for (String reason : new String[]{"manual page choice", "panel disposal"}) {
+            InitialNavigation cancelled = new InitialNavigation();
+            cancelled.schedule(callback -> ready[0] = callback, () -> count[0]++);
+            cancelled.cancel();
+            ready[0].run();
+            check(count[0] == 2, reason + " prevents late startup navigation");
+        }
     }
     private static void nestedResize() throws Exception {
         JPanel[] root = new JPanel[1], top = new JPanel[1], toolbar = new JPanel[1];

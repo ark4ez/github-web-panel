@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.2.0-beta.5
+
+- Wait for Rider's VCS initialization before selecting the initial repository page, including projects whose Git models take longer than 800 ms to load.
+- Preserve explicit navigation while startup is pending, and ignore delayed callbacks after disposal.
+- Clarify that Copy URL writes the selected address to the IDE/system clipboard.
+
+## 0.2.0-beta.4
+
+- Show the current page URL in a selectable, read-only address bar.
+- Add Copy URL for pasting exact links, including query strings and fragments, into other apps.
+- Follow main-frame address changes without saving browsing URLs in plugin preferences.
+
+## 0.2.0-beta.3
+
+- Move Back, Forward and Reload into Rider's native tool-window title bar.
+- Replace the wrapping grid of buttons with one repository/section row.
+- Put page search, browser, sign-in, zoom, rescan and help in the More menu.
+- Shorten the first-use screen and keep find-in-page controls on one line.
+
 ## 0.2.0-beta.2
 
 - Recognized attachment links offer an explicit external-browser action while preserving the current Issue page. In-panel downloads remain unsupported on the tested Rider runtime.
