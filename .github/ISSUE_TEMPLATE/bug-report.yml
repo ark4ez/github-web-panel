@@ -1,0 +1,31 @@
+name: Bug report
+description: Report a reproducible problem without credentials or private repository content.
+body:
+  - type: markdown
+    attributes:
+      value: Do not include passwords, cookies, tokens, OTPs, raw login URLs or private issue text. Report suspected credential exposure through a private channel, not this form.
+  - type: input
+    id: version
+    attributes:
+      label: Plugin and Rider versions
+      description: Include the Rider build number from Help → About.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps and observed behavior
+      description: Prefer a public repository for reproduction. Do not include private repository content.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized screenshot or error code
+      description: Remove account details and query strings; do not upload a complete IDE log by default.

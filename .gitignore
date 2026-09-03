@@ -1,0 +1,14 @@
+.gradle/
+.intellijPlatform/
+build/
+sandbox/
+*.zip
+*.log
+local.properties
+.idea/
+preview.jpg
+.env
+.env.*
+*.jks
+*.p12
+!gradle/wrapper/gradle-wrapper.jar
